@@ -1,0 +1,18 @@
+# EKS hides the control plane, so these targets can't be scraped.
+# Leaving them on causes permanent "target down" alerts.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    retention: 2d
+    # Discover ServiceMonitors/rules from any namespace (needed for later steps)
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
