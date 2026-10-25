@@ -1,0 +1,29 @@
+# Fluent Bit: ships every container's logs to CloudWatch Logs.
+# AWS permissions come from EKS Pod Identity (role: cloudnative-fluent-bit).
+
+# Must match the Pod Identity association exactly (namespace: logging)
+serviceAccount:
+  create: true
+  name: fluent-bit
+
+cloudWatchLogs:
+  enabled: true
+  region: us-east-1
+  # One log group per Kubernetes namespace, e.g. /eks/cloudnative-eks/collabsup
+  logGroupName: /eks/cloudnative-eks/default
+  logGroupTemplate: /eks/cloudnative-eks/$kubernetes['namespace_name']
+  # One log stream per container, e.g. backend-5dc8cc9d6f-kn2qs.backend
+  logStreamTemplate: $kubernetes['pod_name'].$kubernetes['container_name']
+  autoCreateGroup: true
+  # Delete logs after 7 days to keep costs down
+  logRetentionDays: 7
+
+# Turn off every other destination so logs go to CloudWatch Logs only
+cloudWatch:
+  enabled: false
+firehose:
+  enabled: false
+kinesis:
+  enabled: false
+elasticsearch:
+  enabled: false
