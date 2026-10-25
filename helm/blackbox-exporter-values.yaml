@@ -1,0 +1,42 @@
+# Blackbox Exporter: checks URLs from the outside, like a user would.
+
+config:
+  modules:
+    # Plain HTTP check: passes on any 2xx response
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        preferred_ip_protocol: ip4
+
+    # Same check, but sends "Host: localhost" so Django's
+    # ALLOWED_HOSTS accepts the request (otherwise it returns 400)
+    http_2xx_django:
+      prober: http
+      timeout: 5s
+      http:
+        preferred_ip_protocol: ip4
+        headers:
+          Host: localhost
+
+# Create one ServiceMonitor per target so Prometheus runs the checks
+serviceMonitor:
+  enabled: true
+  defaults:
+    interval: 30s
+    scrapeTimeout: 10s
+    module: http_2xx
+  targets:
+    # Inside the cluster: is the frontend pod healthy?
+    - name: collabsup-frontend
+      url: http://frontend.collabsup.svc.cluster.local:8080/
+
+    # Inside the cluster: is Django healthy?
+    - name: collabsup-backend
+      url: http://backend.collabsup.svc.cluster.local:8000/admin/login/
+      module: http_2xx_django
+
+    # From outside: the full path a real user takes, through the ALB
+    # (update this address after each terraform rebuild)
+    - name: collabsup-alb
+      url: http://k8s-collabsu-collabsu-f9e7369d20-1036275301.us-east-1.elb.amazonaws.com/
